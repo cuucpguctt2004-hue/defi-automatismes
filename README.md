@@ -22,14 +22,8 @@ Les questions sont **générées au hasard** à chaque séance. Les mauvaises r�
 
 ## Mettre l'application en ligne avec GitHub Pages
 
-1. Crée un nouveau dépôt sur GitHub, par exemple `defi-automatismes`, en mode **Public**.
-2. Envoie les fichiers de ce dossier à la racine du dépôt : `index.html`, `style.css`, `app.js`, `questions.js` et `README.md`. Tu peux utiliser le bouton **Add file → Upload files**.
-3. Dans le dépôt, va dans **Settings → Pages**.
-4. Dans **Build and deployment**, choisis **Source : Deploy from a branch**, puis la branche **main** et le dossier **/ (root)**, et clique sur **Save**.
-5. Au bout d'une minute ou deux, l'application est en ligne à l'adresse
    `https://<ton-nom-utilisateur>.github.io/defi-automatismes/`.
 
-Tu peux aussi l'essayer sur ton ordinateur sans rien installer : il suffit d'ouvrir `index.html` dans un navigateur.
 
 ## Personnaliser
 
