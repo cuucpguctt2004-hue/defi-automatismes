@@ -126,6 +126,8 @@ h3 { font-size: .95rem; margin: 18px 0 6px; color: var(--accent); }
   background: var(--accent-soft); color: var(--accent);
   border-radius: 999px; padding: 2px 10px; font-size: .8rem; font-weight: 650;
 }
+.chip.review { background: var(--warn-soft); color: var(--text); }
+.revoir { margin: 10px 0 0; padding: 8px 12px; border-radius: 10px; background: var(--warn-soft); font-size: .9rem; }
 .progress { height: 6px; background: var(--accent-soft); border-radius: 99px; overflow: hidden; margin-bottom: 16px; }
 .progress div { height: 100%; width: 0; background: var(--accent-2); transition: width .3s ease; }
 .card {

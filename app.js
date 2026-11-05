@@ -20,6 +20,17 @@
   const save = (list) => {
     try { localStorage.setItem(STORE_KEY, JSON.stringify(list.slice(-200))); } catch (e) { /* ignoré */ }
   };
+  // Progression : jour du programme, questions à revoir, questions déjà vues
+  const PROG_KEY = "defi-automatismes-progression";
+  const loadProg = () => {
+    let p = {};
+    try { p = JSON.parse(localStorage.getItem(PROG_KEY)) || {}; } catch (e) { p = {}; }
+    return { joursFaits: p.joursFaits || 0, aRevoir: p.aRevoir || [], vus: p.vus || [] };
+  };
+  const saveProg = (p) => {
+    try { localStorage.setItem(PROG_KEY, JSON.stringify({ ...p, vus: p.vus.slice(-400) })); } catch (e) { /* ignoré */ }
+  };
+  const MAX_REVISIONS = 5;
 
   const fmtTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
   const dayKey = (d) => {
@@ -40,13 +51,23 @@
   function renderHome() {
     $("hello").textContent = PRENOM ? `Salut ${PRENOM} !` : "Salut !";
     const hist = load();
-    const defis = hist.filter((h) => h.mode === "Défi du jour");
+    const defis = hist.filter((h) => h.mode.startsWith("Défi"));
     const best = defis.filter((h) => h.score === h.total).sort((a, b) => a.time - b.time)[0];
-    const bestScore = defis.length ? Math.max(...defis.map((h) => h.score)) : null;
+    const bestDefi = defis.slice().sort((x, y) => y.score / y.total - x.score / x.total)[0];
+    const bestScore = bestDefi ? `${bestDefi.score}/${bestDefi.total}` : null;
     const s = streak(hist);
+    const prog = loadProg();
+    const jour = prog.joursFaits + 1;
+    $("defiInfo").textContent = jour <= Gen.NB_JOURS
+      ? `Programme de la semaine : jour ${jour} / ${Gen.NB_JOURS}`
+      : "10 questions nouvelles · chrono";
+    $("revoirInfo").hidden = !prog.aRevoir.length;
+    $("revoirInfo").textContent = prog.aRevoir.length === 1
+      ? "1 question ratée reviendra dans ton prochain défi."
+      : `${prog.aRevoir.length} questions ratées reviendront dans tes prochains défis (${MAX_REVISIONS} maximum par séance).`;
     $("stats").innerHTML = `
       <div class="stat"><span class="bignum">${s}</span><span class="muted">jour${s > 1 ? "s" : ""} d'affilée</span></div>
-      <div class="stat"><span class="bignum">${bestScore === null ? "–" : bestScore + "/10"}</span><span class="muted">meilleur défi</span></div>
+      <div class="stat"><span class="bignum">${bestScore === null ? "–" : bestScore}</span><span class="muted">meilleur défi</span></div>
       <div class="stat"><span class="bignum">${best ? fmtTime(best.time) : "–"}</span><span class="muted">record sans faute</span></div>`;
 
     $("themes").innerHTML = Object.keys(Gen.THEMES)
@@ -69,8 +90,25 @@
   let timerId = null;
 
   function start(mode) {
-    const qs = mode === "Défi du jour" ? Gen.defiDuJour() : Gen.serieTheme(mode, 10);
-    state = { mode, qs, i: 0, score: 0, errors: [], t0: Date.now(), answered: false };
+    const prog = loadProg();
+    const avoid = new Set(prog.vus);
+    let qs, jour = null;
+    if (mode === "Défi du jour" && prog.joursFaits < Gen.NB_JOURS) {
+      jour = prog.joursFaits + 1;
+      qs = Gen.programme(jour);
+    } else if (mode === "Défi du jour") {
+      qs = Gen.defiDuJour(avoid);
+    } else {
+      qs = Gen.serieTheme(mode, 10, avoid);
+    }
+    // Les questions ratées précédemment reviennent en début de séance
+    const prompts = new Set(qs.map((q) => q.prompt));
+    const revisions = prog.aRevoir
+      .filter((q) => (mode === "Défi du jour" || q.theme === mode) && !prompts.has(q.prompt))
+      .slice(0, MAX_REVISIONS)
+      .map((q) => ({ ...Gen.revive(q), review: true }));
+    qs = [...revisions, ...qs];
+    state = { mode, jour, qs, i: 0, score: 0, errors: [], reussiesRevues: 0, nbRevues: revisions.length, t0: Date.now(), answered: false };
     clearInterval(timerId);
     timerId = setInterval(() => {
       $("qTimer").textContent = fmtTime(Math.floor((Date.now() - state.t0) / 1000));
@@ -83,7 +121,8 @@
   function renderQuestion() {
     const q = state.qs[state.i];
     state.answered = false;
-    $("qTheme").textContent = q.theme;
+    $("qTheme").textContent = q.review ? `À revoir · ${q.theme}` : q.theme;
+    $("qTheme").classList.toggle("review", !!q.review);
     $("qCount").textContent = `Question ${state.i + 1} / ${state.qs.length}`;
     $("qBar").style.width = `${(state.i / state.qs.length) * 100}%`;
     $("qPrompt").innerHTML = q.prompt;
@@ -124,6 +163,13 @@
     state.answered = true;
     if (ok) state.score++;
     else state.errors.push({ q, given });
+    // Mise à jour de la liste « à revoir »
+    const prog = loadProg();
+    const idx = prog.aRevoir.findIndex((r) => r.prompt === q.prompt);
+    if (ok && idx >= 0) { prog.aRevoir.splice(idx, 1); if (q.review) state.reussiesRevues++; }
+    if (!ok && idx < 0) prog.aRevoir.push(Gen.serialize(q));
+    if (!ok && idx >= 0) { const [r] = prog.aRevoir.splice(idx, 1); prog.aRevoir.push(r); } // repasse en fin de file
+    saveProg(prog);
   }
 
   function answerInput(e) {
@@ -178,9 +224,14 @@
     const time = Math.floor((Date.now() - state.t0) / 1000);
     const total = state.qs.length;
     const hist = load();
-    const prevBest = hist.filter((h) => h.mode === state.mode && h.score === total).sort((a, b) => a.time - b.time)[0];
-    hist.push({ date: new Date().toISOString(), mode: state.mode, score: state.score, total, time });
+    const prevBest = hist.filter((h) => h.mode.startsWith(state.mode === "Défi du jour" ? "Défi" : state.mode) && h.score === h.total).sort((a, b) => a.time - b.time)[0];
+    const label = state.jour ? `Défi · jour ${state.jour}` : state.mode;
+    hist.push({ date: new Date().toISOString(), mode: label, score: state.score, total, time });
     save(hist);
+    const prog = loadProg();
+    if (state.jour && state.jour === prog.joursFaits + 1) prog.joursFaits = state.jour;
+    prog.vus.push(...state.qs.map((q) => q.prompt));
+    saveProg(prog);
 
     $("qBar").style.width = "100%";
     $("rTitle").textContent = state.score === total ? "Sans faute !" : state.score >= total * 0.7 ? "Bien joué !" : "C'est en s'entraînant qu'on progresse !";
@@ -190,6 +241,8 @@
     if (state.score === total && (!prevBest || time < prevBest.time)) msg = "Nouveau record de temps sans faute 🎉";
     else if (state.score === total) msg = `Ton record sans faute reste ${fmtTime(prevBest.time)}. Essaie de le battre demain !`;
     else msg = "Relis les corrections ci-dessous, puis réessaie demain : tu verras la différence.";
+    if (state.nbRevues) msg += ` Questions à revoir réussies : ${state.reussiesRevues} sur ${state.nbRevues}.`;
+    if (state.errors.length) msg += " Les questions ratées reviendront au prochain défi.";
     $("rMsg").textContent = msg;
 
     $("rErrors").innerHTML = state.errors.length

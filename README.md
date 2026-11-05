@@ -14,6 +14,9 @@ Les questions sont **générées au hasard** à chaque séance. Les mauvaises r�
 ## Fonctionnalités
 
 - **Défi du jour** : 10 questions variées, avec un chrono.
+  - Les **6 premiers défis** reprennent, dans l'ordre, les jours 1 à 6 de la fiche d'entraînement de la semaine (PDF).
+  - Ensuite, chaque défi propose des **questions nouvelles**, différentes de celles déjà vues récemment.
+- **Révisions automatiques** : chaque question ratée revient au début des défis suivants (5 au maximum par séance), jusqu'à ce qu'elle soit réussie.
 - **Entraînement par thème** : 10 questions sur un seul thème.
 - **Correction immédiate** pour chaque question, et récapitulatif des erreurs à la fin.
 - **Historique**, série de jours d'affilée et record de temps sans faute, enregistrés dans le navigateur (`localStorage`).
@@ -30,6 +33,8 @@ Les questions sont **générées au hasard** à chaque séance. Les mauvaises r�
 - **Prénom affiché** : modifie la constante `PRENOM` en haut du fichier `app.js`. Laisse `""` pour afficher seulement « Salut ! ».
 - **Questions** : tous les générateurs sont dans `questions.js`, avec une fonction par thème.
 - **Composition du défi du jour** : fonction `defiDuJour()` dans `questions.js`.
+- **Programme de la semaine** : tableau `PROGRAMME` dans `questions.js` (une fonction par jour). Pour un nouveau programme, remplace ces questions.
+- **Repartir de zéro** (nouvelle semaine) : dans le navigateur, efface les données du site, ou change la clé `PROG_KEY` dans `app.js`.
 
 ## Confidentialité
 
