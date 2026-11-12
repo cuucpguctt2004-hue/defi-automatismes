@@ -113,6 +113,7 @@ h3 { font-size: .95rem; margin: 18px 0 6px; color: var(--accent); }
   padding: 14px 12px; text-align: left; font-weight: 600; box-shadow: var(--shadow);
 }
 .theme:hover { border-color: var(--accent-2); }
+.activity { display: flex; flex-direction: column; gap: 2px; text-decoration: none; color: var(--text); }
 .history table { width: 100%; border-collapse: collapse; font-size: .9rem; background: var(--surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); }
 .history th, .history td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); }
 .history th { color: var(--muted); font-weight: 600; font-size: .8rem; }

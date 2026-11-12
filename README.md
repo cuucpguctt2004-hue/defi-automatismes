@@ -20,6 +20,7 @@ Les questions sont **générées au hasard** à chaque séance. Les mauvaises r�
 - **Entraînement par thème** : 10 questions sur un seul thème.
 - **Correction immédiate** pour chaque question, et récapitulatif des erreurs à la fin.
 - **Historique**, série de jours d'affilée et record de temps sans faute, enregistrés dans le navigateur (`localStorage`).
+- **Activité « Les suites en Python »** (`suites.html`) : 6 étapes guidées pour calculer les termes d'une suite arithmétique ou géométrique avec un vrai programme Python, exécuté directement dans le navigateur (moteur Pyodide inclus dans le dossier `pyodide/`, sans installation ni compte).
 - **Fiche rappel** : identités remarquables, règles sur les puissances et les fractions, carrés de 1 à 15.
 - Fonctionne sur téléphone et sur ordinateur, en mode clair et en mode sombre, sans connexion après le premier chargement.
 
@@ -47,4 +48,6 @@ index.html    page et fiche rappel
 style.css     mise en forme (clair et sombre, mobile)
 questions.js  générateurs de questions et vérification des réponses
 app.js        interface : défi, chrono, correction, historique
+suites.html   activité « Les suites en Python »
+pyodide/      moteur Python pour le navigateur (Pyodide 0.26.4, licence MPL 2.0)
 ```

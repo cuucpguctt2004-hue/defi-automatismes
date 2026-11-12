@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Suites en Python</title>
+  <meta name="description" content="Activité : calculer les termes d'une suite avec Python, directement dans le navigateur.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231F4E79'/><text x='50' y='66' font-size='46' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>uₙ</text></svg>">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .intro { margin-bottom: 8px; }
+    .step { margin-top: 18px; }
+    .step h2 { margin: 0 0 6px; display: flex; align-items: center; gap: 8px; }
+    .step h2 .num {
+      display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+      background: var(--accent); color: var(--surface); font-size: .9rem; flex: none;
+    }
+    .step.done h2 .num { background: var(--ok); }
+    .step p { margin: 6px 0; }
+    .bonus { font-size: .75rem; font-weight: 700; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 1px 8px; }
+    textarea.code {
+      width: 100%; min-height: 140px; resize: vertical; margin-top: 8px;
+      font: 15px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      padding: 12px; border-radius: 12px; border: 1px solid var(--line);
+      background: var(--bg); color: var(--text); tab-size: 4; white-space: pre;
+    }
+    textarea.code:focus { outline: none; border-color: var(--accent-2); }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .toolbar .ghost { padding: 10px 14px; }
+    pre.out {
+      margin: 10px 0 0; padding: 12px; border-radius: 12px; min-height: 1.5em;
+      background: #0f1720; color: #d9e5ef; font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace;
+      white-space: pre-wrap; overflow-wrap: anywhere;
+    }
+    pre.out.err { color: #ffb4b4; }
+    .ask { margin-top: 12px; }
+    .ask label { display: block; font-weight: 600; margin-bottom: 6px; }
+    .hint { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--warn-soft); font-size: .93rem; }
+    .loading { font-size: .9rem; color: var(--muted); margin-top: 8px; }
+    code { font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--accent-soft); padding: 1px 5px; border-radius: 6px; font-size: .92em; }
+    .score { margin-top: 22px; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html" style="text-decoration:none">
+      <span class="logo">x²</span><span>Défi Automatismes</span>
+    </a>
+    <a class="ghost" href="index.html" style="text-decoration:none">Retour</a>
+  </header>
+
+  <main>
+    <h1>Les suites en Python</h1>
+    <p class="lead intro">Python peut calculer les termes d'une suite à ta place. Pour chaque étape, lis le code, complète-le si besoin, clique sur <b>Exécuter</b>, puis réponds à la question.</p>
+    <div class="card small">
+      <b>Rappels.</b> Suite arithmétique : on <b>ajoute</b> la raison r à chaque étape, et u<sub>n</sub> = u<sub>0</sub> + n × r.
+      Suite géométrique : on <b>multiplie</b> par la raison q à chaque étape.
+      En Python, <code>for n in range(1, 11):</code> répète les lignes décalées pour n = 1, 2, …, 10.
+    </div>
+
+    <div id="steps"></div>
+
+    <div class="card score" id="scoreBox">
+      <b id="scoreTxt">0 étape réussie sur 6</b>
+      <div class="progress" style="margin:8px 0 0"><div id="scoreBar"></div></div>
+    </div>
+  </main>
+
+  <script src="pyodide/pyodide.js"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    const STEPS = [
+      {
+        title: "Calculer les termes un par un",
+        text: "La suite (u<sub>n</sub>) est arithmétique : u<sub>0</sub> = 4 et r = 3. La boucle ajoute la raison à chaque tour et affiche chaque terme.",
+        code: "u = 4      # premier terme u0\nr = 3      # raison\n\nfor n in range(1, 11):\n    u = u + r\n    print(\"u\", n, \"=\", u)\n",
+        question: "Combien vaut u<sub>10</sub> ?",
+        answer: 34,
+        hint: "Exécute le code et lis la dernière ligne affichée.",
+      },
+      {
+        title: "Utiliser la formule du terme général",
+        text: "Plutôt que de calculer tous les termes, on peut utiliser la formule u<sub>n</sub> = u<sub>0</sub> + n × r. Remplace les <code>...</code> par cette formule (en Python, la multiplication s'écrit <code>*</code>).",
+        code: "u0 = 4\nr = 3\nn = 50\n\nu = ...    # à compléter : formule du terme général\nprint(\"u\", n, \"=\", u)\n",
+        question: "Combien vaut u<sub>50</sub> ?",
+        answer: 154,
+        hint: "Écris u = u0 + n * r. Vérifie : avec n = 10, tu dois retrouver 34 comme à l'étape 1.",
+      },
+      {
+        title: "Une suite qui décroît",
+        text: "Même programme, avec u<sub>0</sub> = 7 et une raison négative r = −2. Modifie les valeurs dans le code (et la valeur de n).",
+        code: "u0 = 4\nr = 3\nn = 20\n\nu = u0 + n * r\nprint(\"u\", n, \"=\", u)\n",
+        question: "Combien vaut u<sub>20</sub> ?",
+        answer: -33,
+        hint: "Remplace 4 par 7 et 3 par -2. Calcul : 7 + 20 × (−2).",
+      },
+      {
+        title: "À partir de quel rang ?",
+        bonus: true,
+        text: "Avec u<sub>0</sub> = 4 et r = 3, on cherche le premier rang n pour lequel u<sub>n</sub> dépasse 100. La boucle <code>while</code> continue tant que la condition est vraie.",
+        code: "u = 4\nn = 0\n\nwhile u <= 100:\n    u = u + 3\n    n = n + 1\n\nprint(\"rang :\", n, \"  terme :\", u)\n",
+        question: "À partir de quel rang n a-t-on u<sub>n</sub> > 100 ?",
+        answer: 33,
+        hint: "Exécute le code : il affiche le rang. Vérifie avec la formule : 4 + 3 × 33 = 103.",
+      },
+      {
+        title: "Une suite géométrique",
+        bonus: true,
+        text: "La suite (v<sub>n</sub>) est géométrique : v<sub>0</sub> = 5 et q = 2. Cette fois, on <b>multiplie</b> par la raison. Complète la ligne avec les <code>...</code>.",
+        code: "v = 5      # premier terme v0\nq = 2      # raison\n\nfor n in range(1, 11):\n    v = ...    # à compléter\n    print(\"v\", n, \"=\", v)\n",
+        question: "Combien vaut v<sub>10</sub> ?",
+        answer: 5120,
+        hint: "Écris v = v * q. Vérifie avec la formule : v<sub>10</sub> = 5 × 2<sup>10</sup> = 5 × 1024.",
+      },
+      {
+        title: "Le prix d'un smartphone",
+        bonus: true,
+        text: "Un smartphone coûte 800 € et perd 20 % de sa valeur chaque année. Perdre 20 %, c'est multiplier par 0,8 (en Python, on écrit <code>0.8</code> avec un point). On cherche au bout de combien d'années il vaut moins de 300 €.",
+        code: "prix = 800\nannee = 0\n\nwhile prix >= 300:\n    prix = prix * 0.8\n    annee = annee + 1\n    print(\"année\", annee, \":\", round(prix, 2), \"€\")\n",
+        question: "Au bout de combien d'années vaut-il moins de 300 € ?",
+        answer: 5,
+        hint: "Exécute le code et regarde la première année où le prix passe sous 300 €.",
+      },
+    ];
+
+    const KEY = "defi-automatismes-suites";
+    const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
+    const save = (s) => { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {} };
+    let saved = load(); // { done: [indices], code: {i: "..."} }
+    saved.done = saved.done || [];
+    saved.code = saved.code || {};
+
+    // ---------- Python (Pyodide, fichiers hébergés avec l'appli) ----------
+    let pyPromise = null;
+    function getPython(statusEl) {
+      if (!pyPromise) {
+        statusEl.textContent = "Chargement de Python… (quelques secondes, seulement la première fois)";
+        pyPromise = loadPyodide({ indexURL: "pyodide/" });
+      }
+      return pyPromise;
+    }
+
+    async function run(i) {
+      const ta = document.getElementById("code" + i);
+      const out = document.getElementById("out" + i);
+      const status = document.getElementById("status" + i);
+      out.classList.remove("err");
+      out.textContent = "";
+      let py;
+      try { py = await getPython(status); }
+      catch (e) { status.textContent = "Impossible de charger Python. Vérifie ta connexion puis recharge la page."; return; }
+      status.textContent = "";
+      const lines = [];
+      py.setStdout({ batched: (s) => lines.push(s) });
+      py.setStderr({ batched: (s) => lines.push(s) });
+      if (/\.\.\./.test(ta.value.replace(/#.*$/gm, ""))) {
+        out.classList.add("err");
+        out.textContent = "Il reste des « ... » à compléter dans le code.";
+        return;
+      }
+      try {
+        await py.runPythonAsync(ta.value);
+        out.textContent = lines.join("\n") || "(Le programme n'a rien affiché : as-tu bien mis un print ?)";
+      } catch (e) {
+        out.classList.add("err");
+        const msg = String(e.message || e).trim().split("\n");
+        const last = msg[msg.length - 1];
+        out.textContent = (lines.length ? lines.join("\n") + "\n\n" : "") + "Erreur : " + last + "\n" + explainError(last);
+      }
+    }
+
+    function explainError(m) {
+      if (/IndentationError/.test(m)) return "Astuce : les lignes dans la boucle doivent être décalées de 4 espaces.";
+      if (/SyntaxError/.test(m)) return "Astuce : vérifie les parenthèses, les deux-points « : » et les signes.";
+      if (/NameError/.test(m)) return "Astuce : une variable est mal écrite ou n'a pas reçu de valeur (attention aux majuscules).";
+      return "";
+    }
+
+    // ---------- interface ----------
+    function render() {
+      const root = document.getElementById("steps");
+      root.innerHTML = STEPS.map((s, i) => `
+        <section class="card step" id="step${i}">
+          <h2><span class="num">${i + 1}</span>${s.title} ${s.bonus ? '<span class="bonus">BONUS</span>' : ""}</h2>
+          <p>${s.text}</p>
+          <textarea class="code" id="code${i}" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Code Python de l'étape ${i + 1}"></textarea>
+          <div class="toolbar">
+            <button class="primary" type="button" data-run="${i}">▶ Exécuter</button>
+            <button class="ghost" type="button" data-reset="${i}">Code de départ</button>
+          </div>
+          <p class="loading" id="status${i}"></p>
+          <pre class="out" id="out${i}" aria-live="polite"></pre>
+          <div class="ask"><label for="ans${i}">${s.question}</label></div>
+          <div class="inputrow" style="margin-top:6px">
+            <input id="ans${i}" inputmode="text" placeholder="Ta réponse">
+            <button class="primary" type="button" data-check="${i}">Valider</button>
+          </div>
+          <div class="feedback" id="fb${i}" hidden></div>
+          <button class="ghost" type="button" data-hint="${i}" style="margin-top:10px">Un indice ?</button>
+          <div class="hint" id="hint${i}" hidden>${s.hint}</div>
+        </section>`).join("");
+
+      STEPS.forEach((s, i) => {
+        const ta = document.getElementById("code" + i);
+        ta.value = saved.code[i] ?? s.code;
+        ta.rows = Math.max(6, ta.value.split("\n").length + 1);
+        ta.addEventListener("input", () => { saved.code[i] = ta.value; save(saved); });
+        ta.addEventListener("keydown", (e) => {
+          if (e.key === "Tab") {
+            e.preventDefault();
+            const a = ta.selectionStart, b = ta.selectionEnd;
+            ta.value = ta.value.slice(0, a) + "    " + ta.value.slice(b);
+            ta.selectionStart = ta.selectionEnd = a + 4;
+            saved.code[i] = ta.value; save(saved);
+          }
+        });
+        if (saved.done.includes(i)) markDone(i, false);
+      });
+
+      root.addEventListener("click", (e) => {
+        const t = e.target.closest("button");
+        if (!t) return;
+        if (t.dataset.run !== undefined) run(+t.dataset.run);
+        if (t.dataset.reset !== undefined) {
+          const i = +t.dataset.reset, ta = document.getElementById("code" + i);
+          ta.value = STEPS[i].code; delete saved.code[i]; save(saved);
+        }
+        if (t.dataset.hint !== undefined) document.getElementById("hint" + t.dataset.hint).hidden = false;
+        if (t.dataset.check !== undefined) check(+t.dataset.check);
+      });
+      root.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && e.target.id && e.target.id.startsWith("ans")) { e.preventDefault(); check(+e.target.id.slice(3)); }
+      });
+      updateScore();
+    }
+
+    function check(i) {
+      const v = document.getElementById("ans" + i).value.trim().replace(",", ".").replace(/[−–]/g, "-").replace(/\s|€/g, "");
+      const fb = document.getElementById("fb" + i);
+      fb.hidden = false;
+      if (v === "" || isNaN(Number(v))) {
+        fb.className = "feedback info"; fb.textContent = "Écris un nombre.";
+        return;
+      }
+      if (Number(v) === STEPS[i].answer) {
+        fb.className = "feedback ok"; fb.innerHTML = "<b>Bravo !</b>";
+        markDone(i, true);
+      } else {
+        fb.className = "feedback ko"; fb.innerHTML = "<b>Pas tout à fait.</b> Exécute le code, relis le résultat, ou demande un indice.";
+      }
+    }
+
+    function markDone(i, persist) {
+      document.getElementById("step" + i).classList.add("done");
+      if (persist && !saved.done.includes(i)) { saved.done.push(i); save(saved); }
+      updateScore();
+    }
+
+    function updateScore() {
+      const n = saved.done.length;
+      document.getElementById("scoreTxt").textContent =
+        n === STEPS.length ? "Bravo, tu as réussi les 6 étapes !" : `${n} étape${n > 1 ? "s" : ""} réussie${n > 1 ? "s" : ""} sur ${STEPS.length}`;
+      document.getElementById("scoreBar").style.width = `${(n / STEPS.length) * 100}%`;
+    }
+
+    render();
+  })();
+  </script>
+</body>
+</html>
