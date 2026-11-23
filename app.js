@@ -58,7 +58,7 @@
     const s = streak(hist);
     const prog = loadProg();
     const jour = prog.joursFaits + 1;
-    $("defiInfo").textContent = jour <= Gen.NB_JOURS
+    $("defiInfo").textContent = jour <= Gen.NB_JOURS && Gen.programmeActif()
       ? `Programme de la semaine : jour ${jour} / ${Gen.NB_JOURS}`
       : "10 questions nouvelles · chrono";
     $("revoirInfo").hidden = !prog.aRevoir.length;
@@ -93,7 +93,7 @@
     const prog = loadProg();
     const avoid = new Set(prog.vus);
     let qs, jour = null;
-    if (mode === "Défi du jour" && prog.joursFaits < Gen.NB_JOURS) {
+    if (mode === "Défi du jour" && prog.joursFaits < Gen.NB_JOURS && Gen.programmeActif()) {
       jour = prog.joursFaits + 1;
       qs = Gen.programme(jour);
     } else if (mode === "Défi du jour") {
@@ -131,7 +131,7 @@
 
     if (q.type === "input") {
       $("inputForm").hidden = false;
-      $("inputHelp").hidden = q.theme !== "Fractions";
+      $("inputHelp").hidden = false;
       $("choices").hidden = true;
       const inp = $("answerInput");
       inp.value = "";
@@ -187,7 +187,7 @@
     $("answerInput").disabled = true;
     $("inputForm").querySelector("button").disabled = true;
     const ok = Gen.sameValue(p, q.answer);
-    const good = Gen.frac(q.answer.n, q.answer.d);
+    const good = q.display || Gen.frac(q.answer.n, q.answer.d);
     record(ok, q, Gen.frac(p.n, p.d));
     if (ok) {
       const note = q.theme === "Fractions" && !Gen.isReduced(p) && p.d !== 1

@@ -100,7 +100,11 @@
       a = rnd(1, b + 2); c = rnd(1, d + 2);
       while (a % b === 0) a = rnd(1, b + 2);
       while (c % d === 0) c = rnd(1, d + 2);
-      if (op === "−" && a * d < c * b) { [a, b, c, d] = [c, d, a, b]; }
+      // Résultat négatif autorisé une fois sur trois pour une soustraction
+      const negResult = op === "−" && Math.random() < 0.35;
+      if (op === "−" && !negResult && a * d < c * b) { [a, b, c, d] = [c, d, a, b]; }
+      // Première fraction négative une fois sur quatre
+      if (Math.random() < 0.25) a = -a;
     }
     let r, explain;
     if (op === "+" || op === "−") {
@@ -118,6 +122,7 @@
       explain = `Diviser par une fraction, c'est multiplier par son inverse : ${frac(a, b)} × ${frac(d, c)} = ${frac(a * d, b * c)}`;
       if (r.d !== b * c || r.n !== a * d) explain += ` = ${frac(r.n, r.d)}`;
     }
+    if (r.n < 0 && !p) explain += ". Attention au signe : le résultat est négatif.";
     return {
       theme: "Fractions", type: "input",
       prompt: `${frac(a, b)} ${op} ${frac(c, d)}`,
@@ -286,6 +291,200 @@
       ],
       `C'est a<sup>2</sup> ${s > 0 ? "+" : MINUS} 2ab + b<sup>2</sup> = (a ${s > 0 ? "+" : MINUS} b)<sup>2</sup> avec a = ${mono(a)} et b = ${B}. Vérifie le terme du milieu : 2 × ${mono(a)} × ${B} = ${mono(2 * a * B)}.`,
     );
+  }
+
+
+  // ---------- 7. Nombres négatifs ----------
+  const par2 = (x) => (x < 0 ? `(${num(x)})` : String(x)); // parenthèses autour d'un négatif
+  const nz = (min, max) => { let x = 0; while (x === 0) x = rnd(min, max); return x; };
+  const nz2 = (max) => rnd(2, max) * (Math.random() < 0.5 ? -1 : 1); // entier non nul, différent de ±1
+  const signeProduit = (a, b) => ((a < 0) !== (b < 0)
+    ? "Un seul des deux nombres est négatif : le résultat est négatif."
+    : "Les deux nombres sont négatifs : « moins par moins donne plus », le résultat est positif.");
+  function negatifs() {
+    const kind = pick(["add", "add", "sub", "sub", "mul", "div", "prio", "carre"]);
+    const saisieN = (prompt, v, explain) => ({ theme: "Nombres négatifs", type: "input", prompt, answer: { n: v, d: 1 }, explain });
+    if (kind === "add") {
+      let a = nz(-12, 12), b = nz(-12, 12);
+      if (a > 0 && b > 0) b = -b;
+      const r = a + b, A = Math.abs(a), B = Math.abs(b);
+      const explain = (a < 0) === (b < 0)
+        ? `Deux nombres négatifs : on additionne ${A} + ${B} = ${A + B} et on garde le signe −. Résultat : ${num(r)}.`
+        : `Signes différents : on calcule ${Math.max(A, B)} − ${Math.min(A, B)} = ${Math.abs(A - B)}, et on prend le signe du nombre le plus éloigné de zéro (${num(A > B ? a : b)}). Résultat : ${num(r)}.`;
+      return saisieN(`${num(a)} + ${par2(b)}`, r, explain);
+    }
+    if (kind === "sub") {
+      let a = nz(-12, 12), b = nz(-12, 12);
+      if (b > 0 && a >= b) b = -b;
+      return saisieN(`${num(a)} − ${par2(b)}`, a - b,
+        `Soustraire un nombre, c'est ajouter son opposé : ${num(a)} − ${par2(b)} = ${num(a)} + ${par2(-b)} = ${num(a - b)}.`);
+    }
+    if (kind === "mul") {
+      let a = nz2(9), b = nz2(9);
+      if (a > 0 && b > 0) a = -a;
+      return saisieN(`${num(a)} × ${par2(b)}`, a * b, `${signeProduit(a, b)} ${Math.abs(a)} × ${Math.abs(b)} = ${Math.abs(a * b)}, donc ${num(a)} × ${par2(b)} = ${num(a * b)}.`);
+    }
+    if (kind === "div") {
+      let q = nz2(9), b = nz2(9);
+      if (q > 0 && b > 0) b = -b;
+      const a = q * b;
+      return saisieN(`${num(a)} ÷ ${par2(b)}`, q, `Même règle des signes que pour la multiplication. ${signeProduit(a, b)} ${Math.abs(a)} ÷ ${Math.abs(b)} = ${Math.abs(q)}, donc le résultat est ${num(q)}.`);
+    }
+    if (kind === "prio") {
+      const x = nz(-10, 10), y = rnd(2, 6), z = -rnd(1, 6);
+      const p2 = y * z, r = x - p2;
+      return saisieN(`${num(x)} − ${y} × ${par2(z)}`, r,
+        `La multiplication passe avant la soustraction : ${y} × ${par2(z)} = ${num(p2)}. Puis ${num(x)} − ${par2(p2)} = ${num(x)} + ${-p2} = ${num(r)}.`);
+    }
+    const n = rnd(2, 9);
+    return qcm("Nombres négatifs", `Calcule (${MINUS}${n})<sup>2</sup> et ${MINUS}${n}<sup>2</sup>`,
+      { html: `${n * n} et ${num(-n * n)}` },
+      [
+        { html: `${num(-n * n)} et ${num(-n * n)}`, why: `(${MINUS}${n})<sup>2</sup> = (${MINUS}${n}) × (${MINUS}${n}) : moins par moins donne plus, donc c'est positif.` },
+        { html: `${n * n} et ${n * n}`, why: `Dans ${MINUS}${n}<sup>2</sup>, le carré ne porte que sur ${n} : on calcule ${n}<sup>2</sup> = ${n * n}, puis on met le signe moins.` },
+        { html: `${num(-2 * n)} et ${num(-n * n)}`, why: `Le carré, ce n'est pas multiplier par 2 : (${MINUS}${n})<sup>2</sup> = (${MINUS}${n}) × (${MINUS}${n}).` },
+      ],
+      `(${MINUS}${n})<sup>2</sup> = (${MINUS}${n}) × (${MINUS}${n}) = ${n * n}, alors que ${MINUS}${n}<sup>2</sup> = ${MINUS}(${n} × ${n}) = ${num(-n * n)} : sans parenthèses, le carré ne porte que sur ${n}.`);
+  }
+
+  // ---------- 8. Suites ----------
+  const ix = (v, k) => `${v}<sub>${k}</sub>`;
+  // « a + b n » pour le terme général d'une suite arithmétique
+  const arithN = (a, b) => {
+    const bn = Math.abs(b) === 1 ? "n" : `${Math.abs(b)}n`;
+    return `${num(a)} ${b < 0 ? MINUS : "+"} ${bn}`;
+  };
+  function suites() {
+    const kind = pick(["arithTerme", "arithTerme", "geoTerme", "arithFormule", "geoFormule", "reconnaitre", "raison", "recurrence"]);
+    const saisieS = (prompt, v, explain) => ({ theme: "Suites", type: "input", prompt, answer: { n: v, d: 1 }, explain });
+    const u = (k) => ix("u", k), v = (k) => ix("v", k);
+    if (kind === "arithTerme") {
+      const u0 = rnd(-5, 12), r = nz(-5, 6), n = pick([5, 8, 10, 12, 15, 20]);
+      const val = u0 + n * r;
+      return saisieS(`(${u("n")}) est arithmétique, avec ${u(0)} = ${num(u0)} et de raison r = ${num(r)}. Calcule ${u(n)}.`, val,
+        `${u("n")} = ${u(0)} + n × r, donc ${u(n)} = ${num(u0)} + ${n} × ${par2(r)} = ${num(u0)} + ${par2(n * r)} = ${num(val)}.`);
+    }
+    if (kind === "geoTerme") {
+      const q = pick([2, 2, 3, -2, 10]);
+      const n = q === 10 ? rnd(2, 4) : q === 3 ? rnd(2, 4) : rnd(3, 5);
+      const v0 = pick([1, 2, 3, 5]);
+      const val = v0 * Math.pow(q, n);
+      return saisieS(`(${v("n")}) est géométrique, avec ${v(0)} = ${v0} et de raison q = ${num(q)}. Calcule ${v(n)}.`, val,
+        `${v("n")} = ${v(0)} × q<sup>n</sup>, donc ${v(n)} = ${v0} × ${par2(q)}<sup>${n}</sup> = ${v0} × ${num(Math.pow(q, n))} = ${num(val)}.`);
+    }
+    if (kind === "arithFormule") {
+      const u0 = rnd(1, 9), r = nz(-5, 6);
+      return qcm("Suites", `(${u("n")}) est arithmétique, avec ${u(0)} = ${u0} et r = ${num(r)}. Quel est son terme général ?`,
+        { html: `${u("n")} = ${arithN(u0, r)}` },
+        [
+          { html: `${u("n")} = ${arithN(r, u0)}`, why: `On part de ${u(0)} = ${u0} et on ajoute n fois la raison : ${u(0)} + n × r.` },
+          { html: `${u("n")} = ${u0} × ${par2(r)}<sup>n</sup>`, why: "C'est la forme d'une suite géométrique : ici on ajoute la raison, on ne multiplie pas." },
+          { html: `${u("n")} = ${arithN(u0 + r, r)}`, why: `Vérifie avec n = 0 : on doit retrouver ${u(0)} = ${u0}.` },
+        ],
+        `Pour une suite arithmétique, ${u("n")} = ${u(0)} + n × r = ${arithN(u0, r)}. Vérification : pour n = 0, on retrouve ${u0}.`);
+    }
+    if (kind === "geoFormule") {
+      const v0 = pick([2, 3, 4, 5]), q = pick([2, 3, 4]);
+      return qcm("Suites", `(${v("n")}) est géométrique, avec ${v(0)} = ${v0} et q = ${q}. Quel est son terme général ?`,
+        { html: `${v("n")} = ${v0} × ${q}<sup>n</sup>` },
+        [
+          { html: `${v("n")} = ${v0} + ${q}n`, why: "C'est la forme d'une suite arithmétique : ici on multiplie par la raison à chaque étape." },
+          { html: `${v("n")} = ${v0 * q}<sup>n</sup>`, why: `Seule la raison est à la puissance n : ${v(0)} × q<sup>n</sup>, pas (${v(0)} × q)<sup>n</sup>.` },
+          { html: `${v("n")} = ${v0} × ${q} × n`, why: "La raison est à la puissance n : on la multiplie n fois." },
+        ],
+        `Pour une suite géométrique, ${v("n")} = ${v(0)} × q<sup>n</sup> = ${v0} × ${q}<sup>n</sup>.`);
+    }
+    if (kind === "reconnaitre") {
+      const t = pick(["arith", "geo", "ni"]);
+      if (t === "arith") {
+        const a = rnd(1, 9), r = rnd(2, 6), L = [0, 1, 2, 3].map((k) => a + k * r);
+        return qcm("Suites", `Les premiers termes d'une suite sont ${L.join(" ; ")}. Cette suite est…`,
+          { html: `arithmétique de raison ${r}` },
+          [
+            { html: `géométrique de raison ${r}`, why: `On passe d'un terme au suivant en ajoutant ${r} (${L[1]} − ${L[0]} = ${r}) : elle est arithmétique.` },
+            { html: `arithmétique de raison ${a}`, why: `${a} est le premier terme. La raison est l'écart entre deux termes : ${L[1]} − ${L[0]} = ${r}.` },
+            { html: "ni arithmétique ni géométrique", why: `L'écart entre deux termes est toujours ${r} : elle est arithmétique.` },
+          ],
+          `On ajoute toujours ${r} : ${L.slice(1).map((x, k) => `${x} − ${L[k]} = ${r}`).join(" ; ")}. C'est une suite arithmétique de raison ${r}.`);
+      }
+      if (t === "geo") {
+        const a = pick([1, 2, 3, 5]), q = pick([2, 3]), L = [0, 1, 2, 3].map((k) => a * Math.pow(q, k));
+        return qcm("Suites", `Les premiers termes d'une suite sont ${L.join(" ; ")}. Cette suite est…`,
+          { html: `géométrique de raison ${q}` },
+          [
+            { html: `arithmétique de raison ${L[1] - L[0]}`, why: `${L[1]} − ${L[0]} = ${L[1] - L[0]} mais ${L[2]} − ${L[1]} = ${L[2] - L[1]} : l'écart change. En revanche, on multiplie toujours par ${q}.` },
+            { html: `géométrique de raison ${q + 1}`, why: `Vérifie : ${L[1]} ÷ ${L[0]} = ${q}.` },
+            { html: "ni arithmétique ni géométrique", why: `On multiplie toujours par ${q} : elle est géométrique.` },
+          ],
+          `On multiplie toujours par ${q} : ${L.slice(1).map((x, k) => `${x} ÷ ${L[k]} = ${q}`).join(" ; ")}. C'est une suite géométrique de raison ${q}.`);
+      }
+      const L = pick([[1, 4, 9, 16], [2, 5, 10, 17], [1, 2, 4, 7]]);
+      const d1 = L[1] - L[0];
+      return qcm("Suites", `Les premiers termes d'une suite sont ${L.join(" ; ")}. Cette suite est…`,
+        { html: "ni arithmétique ni géométrique" },
+        [
+          { html: `arithmétique de raison ${d1}`, why: `${L[1]} − ${L[0]} = ${d1} mais ${L[2]} − ${L[1]} = ${L[2] - L[1]} : l'écart n'est pas constant.` },
+          { html: `géométrique de raison ${fmtFR(L[1] / L[0])}`, why: `${L[1]} ÷ ${L[0]} et ${L[2]} ÷ ${L[1]} ne donnent pas le même résultat.` },
+          { html: `arithmétique de raison ${L[2] - L[1]}`, why: "Il faut que l'écart soit le même entre tous les termes consécutifs." },
+        ],
+        `Les écarts (${L.slice(1).map((x, k) => x - L[k]).join(", ")}) ne sont pas constants, et les quotients non plus : la suite n'est ni arithmétique ni géométrique.`);
+    }
+    if (kind === "raison") {
+      const r = nz(-5, 6);
+      if (Math.random() < 0.5) {
+        const k = rnd(1, 6), uk = rnd(-5, 15);
+        return saisieS(`(${u("n")}) est arithmétique, avec ${u(k)} = ${num(uk)} et ${u(k + 1)} = ${num(uk + r)}. Quelle est sa raison ?`, r,
+          `La raison est l'écart entre deux termes consécutifs : r = ${u(k + 1)} − ${u(k)} = ${num(uk + r)} − ${par2(uk)} = ${num(r)}.`);
+      }
+      const u0 = rnd(-5, 12), n = pick([4, 5, 10]);
+      return saisieS(`(${u("n")}) est arithmétique, avec ${u(0)} = ${num(u0)} et ${u(n)} = ${num(u0 + n * r)}. Quelle est sa raison ?`, r,
+        `${u(n)} = ${u(0)} + ${n} × r, donc ${n} × r = ${num(u0 + n * r)} − ${par2(u0)} = ${num(n * r)}, puis r = ${num(n * r)} ÷ ${n} = ${num(r)}.`);
+    }
+    // récurrence
+    const u0 = rnd(1, 5), a = pick([2, 3]), b = nz(-3, 3);
+    const u1 = a * u0 + b, u2 = a * u1 + b;
+    return saisieS(`On définit ${u(0)} = ${u0} et ${u("n+1")} = ${a}${u("n")} ${b < 0 ? MINUS : "+"} ${Math.abs(b)}. Calcule ${u(2)}.`, u2,
+      `On calcule les termes un par un : ${u(1)} = ${a} × ${u0} ${b < 0 ? MINUS : "+"} ${Math.abs(b)} = ${num(u1)}, puis ${u(2)} = ${a} × ${par2(u1)} ${b < 0 ? MINUS : "+"} ${Math.abs(b)} = ${num(u2)}.`);
+  }
+
+  // ---------- 9. Pourcentages ----------
+  function pourcentages() {
+    const kind = pick(["coef", "applique", "applique", "taux", "successifs"]);
+    const saisieP = (prompt, ans, explain) => {
+      const { display, ...answer } = ans;
+      return { theme: "Pourcentages", type: "input", prompt, answer, display, explain };
+    };
+    if (kind === "coef") {
+      const t = pick([3, 5, 10, 12, 15, 20, 25, 30, 40, 50]), up = Math.random() < 0.5;
+      const c = reduce(100 + (up ? t : -t), 100);
+      return saisieP(`${up ? "Augmenter" : "Diminuer"} de ${t} %, c'est multiplier par combien ?`, { ...c, display: fmtFR(c.n / c.d) },
+        `${up ? "Augmenter" : "Diminuer"} de ${t} %, c'est multiplier par 1 ${up ? "+" : MINUS} ${fmtFR(t / 100)} = ${fmtFR((100 + (up ? t : -t)) / 100)}. On appelle ce nombre le coefficient multiplicateur.`);
+    }
+    if (kind === "applique") {
+      const up = Math.random() < 0.5;
+      let prix, t;
+      do { prix = pick([20, 40, 50, 60, 80, 120, 150, 200, 250]); t = pick([5, 10, 20, 25, 30, 50]); } while ((prix * t) % 100 !== 0);
+      const res = prix * (100 + (up ? t : -t)) / 100;
+      return saisieP(`Un article coûte ${prix} €. Son prix ${up ? "augmente" : "baisse"} de ${t} %. Quel est son nouveau prix, en euros ?`, { n: res, d: 1 },
+        `On multiplie par le coefficient ${fmtFR((100 + (up ? t : -t)) / 100)} : ${prix} × ${fmtFR((100 + (up ? t : -t)) / 100)} = ${res} €.`);
+    }
+    if (kind === "taux") {
+      let v1, t;
+      do { v1 = pick([20, 40, 50, 80, 100, 200]); t = pick([10, 20, 25, 50, -10, -20, -25, -50]); } while ((v1 * t) % 100 !== 0);
+      const v2 = v1 * (100 + t) / 100;
+      return saisieP(`Un prix passe de ${v1} € à ${v2} €. Quel est le taux d'évolution, en % ?`, { n: t, d: 1 },
+        `Taux = (valeur finale − valeur initiale) ÷ valeur initiale × 100 = (${v2} − ${v1}) ÷ ${v1} × 100 = ${num(t)} %. ${t < 0 ? "Le taux est négatif car le prix baisse." : ""}`);
+    }
+    const t = pick([10, 20, 25, 50]);
+    const perte = (t * t) / 100;
+    return qcm("Pourcentages", `Un prix augmente de ${t} %, puis baisse de ${t} %. Au total, le prix…`,
+      { html: `baisse de ${fmtFR(perte)} %` },
+      [
+        { html: "ne change pas", why: `La baisse s'applique sur un prix plus élevé : les deux évolutions ne se compensent pas. On multiplie les coefficients.` },
+        { html: `augmente de ${fmtFR(perte)} %`, why: `Le produit des coefficients est inférieur à 1 : le prix baisse.` },
+        { html: `baisse de ${t} %`, why: "On ne fait pas la somme des pourcentages : on multiplie les coefficients." },
+      ],
+      `On multiplie les coefficients : ${fmtFR(1 + t / 100)} × ${fmtFR(1 - t / 100)} = ${fmtFR((1 + t / 100) * (1 - t / 100))}. C'est même une identité remarquable : (1 + a)(1 − a) = 1 − a<sup>2</sup>. Le prix baisse donc de ${fmtFR(perte)} %.`);
   }
 
   // ---------- Questions fixes du programme de la semaine (PDF) ----------
@@ -469,17 +668,23 @@
   const THEMES = {
     "Carrés": carres,
     "Fractions": fractions,
+    "Nombres négatifs": negatifs,
     "Puissances": puissances,
     "Notation scientifique": scientifique,
+    "Pourcentages": pourcentages,
     "Développer": developper,
     "Factoriser": factoriser,
+    "Suites": suites,
   };
 
   // Défi du jour : 10 questions dans un ordre « échauffement »
   function defiDuJour(avoid) {
-    const plan = [carres, carres, fractions, fractions, puissances,
-      Math.random() < 0.5 ? scientifique : puissances,
-      developper, developper, factoriser, factoriser];
+    // Priorités actuelles : fractions, nombres négatifs et suites ;
+    // les identités remarquables (acquises) restent en entretien.
+    const plan = [negatifs, negatifs, fractions, fractions, puissances, pourcentages,
+      suites, suites,
+      Math.random() < 0.5 ? developper : factoriser,
+      Math.random() < 0.5 ? carres : scientifique];
     return plan.map((g) => fresh(g, avoid));
   }
 
@@ -498,7 +703,7 @@
   // Lecture d'une réponse tapée : "3/4", "-2", "0,5", "−1/3"
   function parseAnswer(str) {
     if (typeof str !== "string") return null;
-    const s = str.trim().replace(/\s+/g, "").replace(/[−–]/g, "-").replace(",", ".");
+    const s = str.trim().replace(/\s+/g, "").replace(/[%€]/g, "").replace(/[−–]/g, "-").replace(",", ".");
     if (!s) return null;
     let m = s.match(/^(-?\d+)\/(-?\d+)$/);
     if (m) { const d = parseInt(m[2], 10); if (d === 0) return null; return { n: parseInt(m[1], 10), d }; }
@@ -516,16 +721,18 @@
   // Jour k (1 à 6) du programme de la semaine
   const programme = (k) => PROGRAMME[k - 1]().map((q) => ({ ...q, source: `Jour ${k}` }));
   const NB_JOURS = PROGRAMME.length;
+  // Le programme de la semaine du 6 au 11 novembre 2026 n'est plus proposé après cette semaine
+  const programmeActif = () => Date.now() < new Date(2026, 10, 13).getTime();
 
   // Version enregistrable d'une question (sans les fonctions de test)
   const serialize = (q) => ({
-    theme: q.theme, prompt: q.prompt, type: q.type, answer: q.answer, explain: q.explain,
+    theme: q.theme, prompt: q.prompt, type: q.type, answer: q.answer, display: q.display, explain: q.explain,
     choices: q.choices ? q.choices.map(({ html, correct, why }) => ({ html, correct, why })) : undefined,
   });
   // Rejouer une question enregistrée : on remélange les propositions
   const revive = (q) => ({ ...q, choices: q.choices ? shuffle(q.choices) : undefined });
 
-  const api = { THEMES, defiDuJour, serieTheme, programme, NB_JOURS, serialize, revive, parseAnswer, sameValue, isReduced, reduce, frac, _internals: { poly, lin, mono } };
+  const api = { THEMES, defiDuJour, serieTheme, programme, programmeActif, NB_JOURS, serialize, revive, parseAnswer, sameValue, isReduced, reduce, frac, _internals: { poly, lin, mono } };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.Gen = api;
 })(typeof window !== "undefined" ? window : globalThis);

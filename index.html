@@ -58,7 +58,7 @@
           <input id="answerInput" inputmode="text" placeholder="Ta réponse (ex. 3/4)" aria-label="Ta réponse">
           <button class="primary" type="submit">Valider</button>
         </form>
-        <p id="inputHelp" class="muted small" hidden>Pour une fraction, écris par exemple <b>11/12</b>. Pour un nombre négatif : <b>-1/3</b>.</p>
+        <p id="inputHelp" class="muted small" hidden>Réponds avec un entier, un décimal (<b>1,15</b>) ou une fraction (<b>11/12</b>). Pour un nombre négatif, mets un moins devant : <b>-4</b> ou <b>-1/3</b>.</p>
         <div id="choices" class="choices" hidden></div>
         <div id="feedback" class="feedback" hidden></div>
         <button id="nextBtn" class="primary" type="button" hidden>Suivant</button>
@@ -108,6 +108,24 @@
       <li>Addition : on met au même dénominateur.</li>
       <li>Multiplication : numérateurs ensemble, dénominateurs ensemble.</li>
       <li>Division : on multiplie par l'inverse.</li>
+    </ul>
+    <h3>Nombres négatifs</h3>
+    <ul class="formulas">
+      <li>Signes différents : on soustrait les distances à zéro et on garde le signe du plus éloigné de zéro. <span class="muted">(−7) + 3 = −4</span></li>
+      <li>Soustraire, c'est ajouter l'opposé. <span class="muted">4 − (−6) = 4 + 6 = 10</span></li>
+      <li>Produit ou quotient : moins par moins donne plus, un seul moins donne moins. <span class="muted">(−3) × (−5) = 15 ; (−24) ÷ 6 = −4</span></li>
+      <li>(−3)<sup>2</sup> = 9 mais −3<sup>2</sup> = −9 : sans parenthèses, le carré ne porte que sur 3.</li>
+    </ul>
+    <h3>Pourcentages</h3>
+    <ul class="formulas">
+      <li>Augmenter de t % : multiplier par 1 + t/100. <span class="muted">+15 % → × 1,15</span></li>
+      <li>Diminuer de t % : multiplier par 1 − t/100. <span class="muted">−20 % → × 0,8</span></li>
+      <li>Évolutions successives : on multiplie les coefficients.</li>
+    </ul>
+    <h3>Suites</h3>
+    <ul class="formulas">
+      <li>Arithmétique (on ajoute r) : u<sub>n</sub> = u<sub>0</sub> + n × r</li>
+      <li>Géométrique (on multiplie par q) : v<sub>n</sub> = v<sub>0</sub> × q<sup>n</sup></li>
     </ul>
     <h3>Carrés à connaître</h3>
     <div class="squares" id="squares"></div>

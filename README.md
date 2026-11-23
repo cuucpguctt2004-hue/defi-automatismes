@@ -3,7 +3,10 @@
 Petite application web d'entraînement quotidien aux **automatismes de calcul** du lycée (programme de mathématiques de la voie technologique) :
 
 - carrés à connaître ;
-- fractions (addition, soustraction, multiplication, division) ;
+- fractions (addition, soustraction, multiplication, division), y compris avec des nombres négatifs ;
+- nombres négatifs (addition, soustraction, règle des signes, priorités, (−3)² et −3²) ;
+- pourcentages (coefficient multiplicateur, hausses et baisses, taux d'évolution, évolutions successives) ;
+- suites arithmétiques et géométriques (terme général, calcul d'un terme, raison, suites définies par récurrence) ;
 - puissances (produit, quotient, puissance de puissance, exposant nul ou négatif) ;
 - notation scientifique ;
 - développement avec les identités remarquables ;
@@ -15,7 +18,8 @@ Les questions sont **générées au hasard** à chaque séance. Les mauvaises r�
 
 - **Défi du jour** : 10 questions variées, avec un chrono.
   - Les **6 premiers défis** reprennent, dans l'ordre, les jours 1 à 6 de la fiche d'entraînement de la semaine (PDF).
-  - Ensuite, chaque défi propose des **questions nouvelles**, différentes de celles déjà vues récemment.
+  - Ensuite, chaque défi propose des **questions nouvelles**, différentes de celles déjà vues récemment. Il met l'accent sur les fractions, les nombres négatifs et les suites, avec une question d'entretien sur les identités remarquables.
+  - Le programme de la semaine du 6 au 11 novembre 2026 n'est plus proposé après cette semaine.
 - **Révisions automatiques** : chaque question ratée revient au début des défis suivants (5 au maximum par séance), jusqu'à ce qu'elle soit réussie.
 - **Entraînement par thème** : 10 questions sur un seul thème.
 - **Correction immédiate** pour chaque question, et récapitulatif des erreurs à la fin.
