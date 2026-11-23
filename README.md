@@ -5,8 +5,8 @@ Petite application web d'entraînement quotidien aux **automatismes de calcul** 
 - carrés à connaître ;
 - fractions (addition, soustraction, multiplication, division), y compris avec des nombres négatifs ;
 - nombres négatifs (addition, soustraction, règle des signes, priorités, (−3)² et −3²) ;
-- pourcentages (coefficient multiplicateur, hausses et baisses, taux d'évolution, évolutions successives) ;
-- suites arithmétiques et géométriques (terme général, calcul d'un terme, raison, suites définies par récurrence) ;
+- pourcentages (coefficient multiplicateur, hausses et baisses, taux d'évolution, évolutions successives, taux d'évolution moyen, indices base 100) ;
+- suites arithmétiques et géométriques (terme général, calcul d'un terme, raison, suites définies par récurrence, sommes de termes, notation Σ) ;
 - puissances (produit, quotient, puissance de puissance, exposant nul ou négatif) ;
 - notation scientifique ;
 - développement avec les identités remarquables ;

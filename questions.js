@@ -355,7 +355,7 @@
     return `${num(a)} ${b < 0 ? MINUS : "+"} ${bn}`;
   };
   function suites() {
-    const kind = pick(["arithTerme", "arithTerme", "geoTerme", "arithFormule", "geoFormule", "reconnaitre", "raison", "recurrence"]);
+    const kind = pick(["arithTerme", "arithTerme", "geoTerme", "arithFormule", "geoFormule", "reconnaitre", "raison", "recurrence", "sommeEntiers", "sommeArith", "sommeGeo", "sigma"]);
     const saisieS = (prompt, v, explain) => ({ theme: "Suites", type: "input", prompt, answer: { n: v, d: 1 }, explain });
     const u = (k) => ix("u", k), v = (k) => ix("v", k);
     if (kind === "arithTerme") {
@@ -440,6 +440,40 @@
       return saisieS(`(${u("n")}) est arithmétique, avec ${u(0)} = ${num(u0)} et ${u(n)} = ${num(u0 + n * r)}. Quelle est sa raison ?`, r,
         `${u(n)} = ${u(0)} + ${n} × r, donc ${n} × r = ${num(u0 + n * r)} − ${par2(u0)} = ${num(n * r)}, puis r = ${num(n * r)} ÷ ${n} = ${num(r)}.`);
     }
+    if (kind === "sommeEntiers") {
+      const n = pick([10, 20, 30, 40, 50, 100]);
+      return saisieS(`Calcule 1 + 2 + 3 + … + ${n}.`, n * (n + 1) / 2,
+        `On utilise 1 + 2 + … + n = n(n + 1) / 2 : ${n} × ${n + 1} / 2 = ${n * (n + 1) / 2}.`);
+    }
+    if (kind === "sommeArith") {
+      let u0, r, n, S;
+      do { u0 = rnd(1, 20); r = rnd(1, 6); n = pick([4, 5, 9, 10, 19]); S = (n + 1) * (2 * u0 + n * r) / 2; } while (!Number.isInteger(S));
+      const un = u0 + n * r;
+      return saisieS(`(${u("n")}) est arithmétique, avec ${u(0)} = ${u0} et r = ${r}. Calcule la somme ${u(0)} + ${u(1)} + … + ${u(n)}.`, S,
+        `Somme d'une suite arithmétique = nombre de termes × (premier + dernier) / 2. De ${u(0)} à ${u(n)}, il y a ${n + 1} termes (attention, pas ${n}) ; le dernier vaut ${u(n)} = ${u0} + ${n} × ${r} = ${un}. Donc S = ${n + 1} × (${u0} + ${un}) / 2 = ${S}.`);
+    }
+    if (kind === "sommeGeo") {
+      const v0 = pick([1, 2, 3, 5]), q = pick([2, 2, 3]), n = q === 3 ? rnd(2, 4) : rnd(3, 6);
+      const N = n + 1, S = v0 * (Math.pow(q, N) - 1) / (q - 1);
+      return saisieS(`(${v("n")}) est géométrique, avec ${v(0)} = ${v0} et q = ${q}. Calcule la somme ${v(0)} + ${v(1)} + … + ${v(n)}.`, S,
+        `Somme d'une suite géométrique = premier terme × (1 − q<sup>N</sup>) / (1 − q), où N est le nombre de termes. De ${v(0)} à ${v(n)}, il y a N = ${N} termes. Donc S = ${v0} × (1 − ${q}<sup>${N}</sup>) / (1 − ${q}) = ${v0} × (${num(1 - Math.pow(q, N))}) / (${num(1 - q)}) = ${S}.`);
+    }
+    if (kind === "sigma") {
+      const sig = (bas, haut) => `<span class="sigma"><span>${haut}</span><span>∑</span><span>${bas}</span></span>`;
+      if (Math.random() < 0.6) {
+        const m = rnd(4, 6), a = rnd(2, 4), b = nz(-3, 5);
+        const terms = Array.from({ length: m }, (_, i) => a * (i + 1) + b);
+        const S = terms.reduce((x, y) => x + y, 0);
+        const expr = `${a}k ${b < 0 ? MINUS : "+"} ${Math.abs(b)}`;
+        return saisieS(`Calcule ${sig("k=1", m)} (${expr}).`, S,
+          `On remplace k par 1, 2, …, ${m} et on additionne : ${terms.map(num).join(" + ")} = ${num(S)}.`);
+      }
+      const m = rnd(3, 4), c = pick([1, 2, 3, 5]);
+      const terms = Array.from({ length: m + 1 }, (_, k) => c * Math.pow(2, k));
+      const S = terms.reduce((x, y) => x + y, 0);
+      return saisieS(`Calcule ${sig("k=0", m)} ${c === 1 ? "" : c + " × "}2<sup>k</sup>.`, S,
+        `On remplace k par 0, 1, …, ${m} (${m + 1} termes) : ${terms.join(" + ")} = ${S}. C'est la somme d'une suite géométrique de raison 2.`);
+    }
     // récurrence
     const u0 = rnd(1, 5), a = pick([2, 3]), b = nz(-3, 3);
     const u1 = a * u0 + b, u2 = a * u1 + b;
@@ -449,7 +483,7 @@
 
   // ---------- 9. Pourcentages ----------
   function pourcentages() {
-    const kind = pick(["coef", "applique", "applique", "taux", "successifs"]);
+    const kind = pick(["coef", "applique", "applique", "taux", "successifs", "indice", "indice2", "moyen", "moyen"]);
     const saisieP = (prompt, ans, explain) => {
       const { display, ...answer } = ans;
       return { theme: "Pourcentages", type: "input", prompt, answer, display, explain };
@@ -474,6 +508,27 @@
       const v2 = v1 * (100 + t) / 100;
       return saisieP(`Un prix passe de ${v1} € à ${v2} €. Quel est le taux d'évolution, en % ?`, { n: t, d: 1 },
         `Taux = (valeur finale − valeur initiale) ÷ valeur initiale × 100 = (${v2} − ${v1}) ÷ ${v1} × 100 = ${num(t)} %. ${t < 0 ? "Le taux est négatif car le prix baisse." : ""}`);
+    }
+    if (kind === "indice") {
+      const v0 = pick([2000, 4000, 5000, 8000, 1200]), I = pick([85, 90, 104, 112, 115, 120, 135]);
+      if (Math.random() < 0.5) {
+        return saisieP(`La production d'un atelier est indexée sur 2023 (indice 100 en 2023). L'indice vaut ${fmtFR(I)} en 2025. Quel est le taux d'évolution entre 2023 et 2025, en % ?`, { n: I - 100, d: 1 },
+          `Avec une base 100, le taux se lit directement : ${fmtFR(I)} − 100 = ${num(I - 100)} %.`);
+      }
+      const v = v0 * I / 100;
+      return saisieP(`Une production vaut ${fmtFR(v0)} unités en 2023 (indice 100). En 2025, l'indice vaut ${I}. Combien d'unités produit-on en 2025 ?`, { n: v, d: 1 },
+        `L'indice ${I} signifie ${I} pour 100 : ${fmtFR(v0)} × ${I} / 100 = ${fmtFR(v)} unités.`);
+    }
+    if (kind === "indice2") {
+      const [I1, I2, t2] = pick([[125, 150, 20], [80, 100, 25], [120, 90, -25], [150, 120, -20], [110, 121, 10], [200, 250, 25], [160, 120, -25]]);
+      return saisieP(`Base 100 en 2023. L'indice vaut ${I1} en 2024 et ${I2} en 2025. Quel est le taux d'évolution entre 2024 et 2025, en % ?`, { n: t2, d: 1 },
+        `Attention, on ne soustrait pas les indices : le taux se calcule par rapport à ${I1}. (${I2} − ${I1}) ÷ ${I1} × 100 = ${num(t2)} %.`);
+    }
+    if (kind === "moyen") {
+      const [glob, ans, n] = pick([[21, 10, 2], [44, 20, 2], [-19, -10, 2], [-36, -20, 2], [33.1, 10, 3], [-27.1, -10, 3], [72.8, 20, 3], [56.25, 25, 2]]);
+      const cg = 1 + glob / 100, cm = 1 + ans / 100;
+      return saisieP(`Une production ${glob > 0 ? "augmente" : "baisse"} de ${fmtFR(Math.abs(glob))} % en ${n} ans. Quel est le taux d'évolution moyen annuel, en % ?`, { n: ans, d: 1 },
+        `On cherche le coefficient c tel que c<sup>${n}</sup> = ${fmtFR(cg)}. Donc c = ${fmtFR(cg)}<sup>1/${n}</sup> = ${fmtFR(cm)}, soit un taux moyen de ${num(ans)} % par an. Vérification : ${fmtFR(cm)}<sup>${n}</sup> = ${fmtFR(cg)}. Ce n'est pas ${fmtFR(glob / n)} % : les évolutions se multiplient, elles ne s'additionnent pas.`);
     }
     const t = pick([10, 20, 25, 50]);
     const perte = (t * t) / 100;
