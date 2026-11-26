@@ -720,6 +720,187 @@
     ],
   ];
 
+  // ---------- 9. Équations du premier degré ----------
+  // Côté gauche ou droit d'une équation : a·x + b (b peut valoir 0)
+  const side = (a, b) => (a === 0 ? num(b) : b === 0 ? mono(a) : lin(a, b));
+  const fracR = (n, d) => { const r = reduce(n, d); return frac(r.n, r.d); };
+  function equations() {
+    const kind = pick(["simple", "ax+b", "ax+b", "neg", "deuxCotes", "deuxCotes", "parentheses", "division", "coefFrac", "fracSol", "piege", "suiteRaison", "suiteRang"]);
+    const saisieE = (prompt, n, d, explain) => ({ theme: "Équations", type: "input", prompt: `Résous : ${prompt}<br><span class="small muted">x = ?</span>`, answer: reduce(n, d), explain });
+    const x = nz(-10, 10);
+    if (kind === "simple") {
+      const b = nz(-15, 15), c = x + b;
+      return saisieE(`x ${b < 0 ? MINUS : "+"} ${Math.abs(b)} = ${num(c)}`, x, 1,
+        `${b < 0 ? `J'ajoute ${-b}` : `J'enlève ${b}`} des deux côtés : x = ${num(c)} ${b < 0 ? "+" : MINUS} ${Math.abs(b)} = ${num(x)}.`);
+    }
+    if (kind === "ax+b" || kind === "neg") {
+      const a = kind === "neg" ? -rnd(2, 9) : rnd(2, 9), b = nz(-15, 15), c = a * x + b;
+      return saisieE(`${lin(a, b)} = ${num(c)}`, x, 1,
+        `${b < 0 ? `J'ajoute ${-b}` : `J'enlève ${b}`} des deux côtés : ${mono(a)} = ${num(c - b)}. `
+        + `Je divise par ${num(a)} : x = ${num(c - b)} ÷ ${par2(a)} = ${num(x)}.`
+        + (a < 0 ? " Le signe moins reste avec le nombre devant x : on divise bien par un nombre négatif." : ""));
+    }
+    if (kind === "deuxCotes") {
+      let a = nz(-6, 9), c = nz(-6, 9); while (c === a) c = nz(-6, 9);
+      const b = nz(-12, 12), d = (a - c) * x + b;
+      return saisieE(`${lin(a, b)} = ${side(c, d)}`, x, 1,
+        `${c > 0 ? `J'enlève ${mono(c)}` : `J'ajoute ${mono(-c)}`} des deux côtés : ${side(a - c, b)} = ${num(d)}. `
+        + `${b < 0 ? `J'ajoute ${-b}` : `J'enlève ${b}`} : ${mono(a - c)} = ${num(d - b)}. `
+        + (a - c === 1 ? `Donc x = ${num(x)}.` : `Je divise par ${num(a - c)} : x = ${num(x)}.`));
+    }
+    if (kind === "parentheses") {
+      const k = rnd(2, 5), m = nz(-6, 6); let c = rnd(1, 4); if (c === k) c = k + 1;
+      const d = k * (x + m) - c * x;
+      return saisieE(`${k}(${lin(1, m)}) = ${side(c, d)}`, x, 1,
+        `Je développe : ${lin(k, k * m)} = ${side(c, d)}. J'enlève ${mono(c)} : ${side(k - c, k * m)} = ${num(d)}. `
+        + `${k * m < 0 ? `J'ajoute ${-k * m}` : `J'enlève ${k * m}`} : ${mono(k - c)} = ${num(d - k * m)}. `
+        + (k - c === 1 ? `Donc x = ${num(x)}.` : `Je divise par ${num(k - c)} : x = ${num(x)}.`));
+    }
+    if (kind === "division") {
+      const k = rnd(2, 6), y = nz(-6, 6), X = k * y, b = nz(-9, 9), c = y + b;
+      return saisieE(`${frac(1, k).replace("1", "x")} ${b < 0 ? MINUS : "+"} ${Math.abs(b)} = ${num(c)}`, X, 1,
+        `${b < 0 ? `J'ajoute ${-b}` : `J'enlève ${b}`} : x ÷ ${k} = ${num(y)}. x est divisé par ${k}, donc je multiplie par ${k} : x = ${num(y)} × ${k} = ${num(X)}.`);
+    }
+    if (kind === "coefFrac") {
+      const p = rnd(2, 5), q = pick([3, 4, 5, 7].filter((t) => gcd(t, p) === 1)), y = nz(-5, 5), X = q * y, c = p * y;
+      return saisieE(`${frac(p, q)} x = ${num(c)}`, X, 1,
+        `Pour isoler x, je multiplie par l'inverse de ${frac(p, q)}, c'est-à-dire ${frac(q, p)} : x = ${num(c)} × ${frac(q, p)} = ${frac(c * q, p)} = ${num(X)}.`);
+    }
+    if (kind === "fracSol") {
+      let a = rnd(2, 9), n = nz(-20, 20); while (n % a === 0) n = nz(-20, 20);
+      const b = nz(-9, 9);
+      return saisieE(`${lin(a, b)} = ${num(n + b)}`, n, a,
+        `${b < 0 ? `J'ajoute ${-b}` : `J'enlève ${b}`} : ${mono(a)} = ${num(n)}. Je divise par ${a} : x = ${fracR(n, a)}. `
+        + `La division ne tombe pas juste : la solution est une fraction, c'est normal.`);
+    }
+    if (kind === "piege") {
+      const a = -rnd(2, 6), y = nz2(6), c = a * y;
+      return qcm("Équations", `${mono(a)} = ${num(c)}. Que vaut x ?`, { html: `x = ${num(y)}` },
+        [
+          { html: `x = ${num(c - a)}`, why: `${mono(a)} veut dire ${num(a)} × x : on divise par ${num(a)}, on ne l'ajoute pas.` },
+          { html: `x = ${num(-y)}`, why: `On divise par ${num(a)} (avec son signe moins) : la règle des signes change le signe du résultat.` },
+          { html: `x = ${num(c + a)}`, why: `${mono(a)} est une multiplication : pour isoler x, on divise par ${num(a)}.` },
+          { html: `x = ${num(c)}`, why: `Il faut encore diviser par ${num(a)} pour isoler x.` },
+          { html: `x = ${num(-c)}`, why: `On divise par ${num(a)}, on ne se contente pas de changer le signe.` },
+        ],
+        `${mono(a)} signifie ${num(a)} × x. Je divise les deux côtés par ${num(a)} : x = ${num(c)} ÷ ${par2(a)} = ${num(y)}.`);
+    }
+    if (kind === "suiteRaison") {
+      const p = rnd(0, 4), gap = rnd(2, 6), r = nz(-8, 8), up = rnd(-20, 40), uq = up + gap * r;
+      return { theme: "Équations", type: "input",
+        prompt: `Suite arithmétique : ${ix("u", p)} = ${num(up)} et ${ix("u", p + gap)} = ${num(uq)}. Quelle est la raison r ?`,
+        answer: { n: r, d: 1 },
+        explain: `De ${ix("u", p)} à ${ix("u", p + gap)}, on ajoute ${gap} fois r : ${num(up)} + ${gap}r = ${num(uq)}. `
+          + `${up < 0 ? `J'ajoute ${-up}` : `J'enlève ${up}`} : ${gap}r = ${num(uq - up)}. Je divise par ${gap} : r = ${num(r)}.` };
+    }
+    const u0 = pick([200, 350, 500, 800, 930, 1200]), r = pick([15, 20, 25, 30, 40, 50]), n = rnd(4, 20), cible = u0 + r * n;
+    return { theme: "Équations", type: "input",
+      prompt: `On a ${ix("u", "n")} = ${u0} + ${r}n. Pour quelle valeur de n a-t-on ${ix("u", "n")} = ${cible} ?`,
+      answer: { n, d: 1 },
+      explain: `${u0} + ${r}n = ${cible}. J'enlève ${u0} : ${r}n = ${cible - u0}. Je divise par ${r} : n = ${n}.` };
+  }
+
+  // ---------- 10. Équations du second degré ----------
+  const sol2 = (a, b) => { if (a > b) [a, b] = [b, a]; return a === b ? `x = ${num(a)}` : `x = ${num(a)} ou x = ${num(b)}`; };
+  const AUCUNE = "Aucune solution réelle";
+  function secondDegre() {
+    const kind = pick(["produit", "carre", "carre", "carreCoef", "facteurX", "delta", "delta", "discri", "discri", "discriSpecial"]);
+    if (kind === "produit") {
+      const p = nz(-9, 9); let q = nz(-9, 9); while (q === p || q === -p) q = nz(-9, 9);
+      return qcm("Second degré", `Résous : (${lin(1, -p)})(${lin(1, -q)}) = 0`, { html: sol2(p, q) },
+        [
+          { html: sol2(-p, -q), why: `Si x ${p < 0 ? "+" : MINUS} ${Math.abs(p)} = 0, alors x = ${num(p)} : on change de signe en passant de l'autre côté.` },
+          { html: `x = ${num(p)}`, why: "Un produit est nul si l'un OU l'autre facteur est nul : il y a deux solutions." },
+          { html: sol2(p, -q), why: `Regarde bien chaque parenthèse : x ${q < 0 ? "+" : MINUS} ${Math.abs(q)} = 0 donne x = ${num(q)}.` },
+          { html: sol2(-p, q), why: `Regarde bien chaque parenthèse : x ${p < 0 ? "+" : MINUS} ${Math.abs(p)} = 0 donne x = ${num(p)}.` },
+          { html: `x = ${num(q)}`, why: "Un produit est nul si l'un OU l'autre facteur est nul : il y a deux solutions." },
+        ],
+        `Un produit est nul si l'un des facteurs est nul : ${lin(1, -p)} = 0 ou ${lin(1, -q)} = 0, donc ${sol2(p, q)}.`);
+    }
+    if (kind === "carre") {
+      const n = rnd(2, 12);
+      if (Math.random() < 0.25) return qcm("Second degré", `Résous : x<sup>2</sup> + ${n * n} = 0`, { html: AUCUNE },
+        [
+          { html: sol2(n, -n), why: `On obtient x<sup>2</sup> = ${num(-n * n)}. Or un carré n'est jamais négatif.` },
+          { html: `x = ${num(-n)}`, why: `(${num(-n)})<sup>2</sup> = ${n * n}, pas ${num(-n * n)} : un carré est toujours positif.` },
+          { html: `x = ${num(-n * n)}`, why: "On cherche x tel que x × x = ce nombre, pas le nombre lui-même." },
+        ],
+        `x<sup>2</sup> = ${num(-n * n)} : un carré est toujours positif ou nul, donc il n'y a aucune solution.`);
+      const forme = Math.random() < 0.5;
+      return qcm("Second degré", forme ? `Résous : x<sup>2</sup> = ${n * n}` : `Résous : x<sup>2</sup> ${MINUS} ${n * n} = 0`,
+        { html: sol2(n, -n) },
+        [
+          { html: `x = ${n}`, why: `N'oublie pas la solution négative : (${num(-n)})<sup>2</sup> = ${n * n} aussi.` },
+          { html: n === 2 ? sol2(4, -4) : `x = ${fracR(n * n, 2)} ou x = ${fracR(-n * n, 2)}`, why: n === 2 ? "On cherche un nombre dont le carré vaut 4, pas 4 lui-même." : `x<sup>2</sup> veut dire x × x, pas 2 × x.` },
+          { html: AUCUNE, why: `${n * n} est positif : il y a bien deux solutions, ${n} et ${num(-n)}.` },
+        ],
+        forme ? `x<sup>2</sup> = ${n * n} : x = ${n} ou x = ${num(-n)} (car ${n}<sup>2</sup> = (${num(-n)})<sup>2</sup> = ${n * n}).`
+          : `x<sup>2</sup> ${MINUS} ${n * n} = (x ${MINUS} ${n})(x + ${n}) = 0, donc x = ${n} ou x = ${num(-n)}.`);
+    }
+    if (kind === "carreCoef") {
+      const p = rnd(2, 5); let q = rnd(1, 9); while (gcd(p, q) !== 1) q = rnd(1, 9);
+      return qcm("Second degré", `Résous : ${p * p}x<sup>2</sup> ${MINUS} ${q * q} = 0`,
+        { html: `x = ${fracR(q, p)} ou x = ${fracR(-q, p)}` },
+        [
+          { html: `x = ${fracR(q, p * p)} ou x = ${fracR(-q, p * p)}`, why: `${p * p}x<sup>2</sup> = (${p}x)<sup>2</sup> : c'est ${p}x qui vaut ±${q}.` },
+          { html: `x = ${q} ou x = ${num(-q)}`, why: `On a (${p}x)<sup>2</sup> = ${q * q}, donc ${p}x = ±${q} : il reste à diviser par ${p}.` },
+          { html: `x = ${fracR(q * q, p * p)}`, why: `On cherche x, pas x<sup>2</sup> ; et il y a deux solutions.` },
+        ],
+        `${p * p}x<sup>2</sup> ${MINUS} ${q * q} = (${p}x)<sup>2</sup> ${MINUS} ${q}<sup>2</sup> = (${p}x ${MINUS} ${q})(${p}x + ${q}) = 0, donc x = ${fracR(q, p)} ou x = ${fracR(-q, p)}.`);
+    }
+    if (kind === "facteurX") {
+      const k = nz2(9);
+      return qcm("Second degré", `Résous : ${poly(1, -k, 0)} = 0`, { html: sol2(0, k) },
+        [
+          { html: `x = ${num(k)}`, why: "Ne divise pas par x : tu perdrais la solution x = 0. On factorise par x." },
+          { html: sol2(0, -k), why: `x ${k < 0 ? "+" : MINUS} ${Math.abs(k)} = 0 donne x = ${num(k)}.` },
+          { html: sol2(k, -k), why: "On factorise par x : x(x − k) = 0. L'une des solutions est 0." },
+        ],
+        `On factorise par x : x(${lin(1, -k)}) = 0, donc x = 0 ou x = ${num(k)}.`);
+    }
+    if (kind === "delta") {
+      const a = nz(-4, 4), b = nz(-9, 9), c = nz(-9, 9), D = b * b - 4 * a * c;
+      return { theme: "Second degré", type: "input", prompt: `Calcule le discriminant Δ = b<sup>2</sup> ${MINUS} 4ac de ${poly(a, b, c)}`,
+        answer: { n: D, d: 1 },
+        explain: `a = ${num(a)}, b = ${num(b)}, c = ${num(c)}. Δ = ${par2(b)}<sup>2</sup> ${MINUS} 4 × ${par2(a)} × ${par2(c)} = ${b * b} ${-4 * a * c < 0 ? MINUS : "+"} ${Math.abs(4 * a * c)} = ${num(D)}. `
+          + `Attention : b<sup>2</sup> est toujours positif, même si b est négatif.` };
+    }
+    if (kind === "discri") {
+      const a = pick([1, 1, 1, 2, -1]), p = nz(-6, 6); let q = nz(-6, 6); while (q === p || q === -p) q = nz(-6, 6);
+      // a(x − p)(x − q)
+      const b = -a * (p + q), c = a * p * q, D = b * b - 4 * a * c, s = Math.round(Math.sqrt(D));
+      const [x1, x2] = [p, q].sort((m, n) => m - n);
+      return qcm("Second degré", `Résous : ${poly(a, b, c)} = 0`, { html: sol2(x1, x2) },
+        [
+          { html: sol2(-x2, -x1), why: `Attention au signe de −b : avec b = ${num(b)}, on a −b = ${num(-b)}.` },
+          { html: AUCUNE, why: `Δ = ${num(D)} est positif : il y a deux solutions.` },
+          { html: `x = ${fracR(-b, 2 * a)}`, why: `Il n'y a une seule solution que si Δ = 0. Ici Δ = ${num(D)}.` },
+        ],
+        `Δ = ${par2(b)}<sup>2</sup> ${MINUS} 4 × ${par2(a)} × ${par2(c)} = ${num(D)} &gt; 0, √Δ = ${s}. `
+        + `x = (${num(-b)} ${MINUS} ${s}) ÷ ${par2(2 * a)} et x = (${num(-b)} + ${s}) ÷ ${par2(2 * a)}, donc ${sol2(x1, x2)}.`);
+    }
+    // Δ = 0 ou Δ < 0
+    if (Math.random() < 0.5) {
+      const p = nz(-6, 6), a = pick([1, 1, -1]), b = -2 * a * p, c = a * p * p;
+      return qcm("Second degré", `Résous : ${poly(a, b, c)} = 0`, { html: `x = ${num(p)}` },
+        [
+          { html: sol2(p, -p), why: "Δ = 0 : il n'y a qu'une seule solution, x = −b / (2a)." },
+          { html: AUCUNE, why: "Δ = 0 n'est pas négatif : il y a une solution." },
+          { html: `x = ${num(-p)}`, why: `Attention au signe : x = −b / (2a) = ${num(-b)} ÷ ${par2(2 * a)}.` },
+        ],
+        `Δ = ${par2(b)}<sup>2</sup> ${MINUS} 4 × ${par2(a)} × ${par2(c)} = 0 : une seule solution, x = −b / (2a) = ${num(-b)} ÷ ${par2(2 * a)} = ${num(p)}.`);
+    }
+    let b = nz(-5, 5), c = rnd(1, 9); while (b * b - 4 * c >= 0) c++;
+    const D = b * b - 4 * c;
+    return qcm("Second degré", `Résous : ${poly(1, b, c)} = 0`, { html: AUCUNE },
+      [
+        { html: sol2(b, -b), why: `Calcule d'abord Δ = ${num(D)} : il est négatif.` },
+        { html: `x = ${fracR(-b, 2)}`, why: `Une seule solution seulement si Δ = 0. Ici Δ = ${num(D)}.` },
+        { html: `x = ${num(-c)}`, why: "On ne peut pas résoudre comme une équation du premier degré : on calcule Δ." },
+      ],
+      `Δ = ${par2(b)}<sup>2</sup> ${MINUS} 4 × 1 × ${c} = ${b * b} ${MINUS} ${4 * c} = ${num(D)} &lt; 0 : aucune solution réelle.`);
+  }
+
   const THEMES = {
     "Carrés": carres,
     "Fractions": fractions,
@@ -730,16 +911,20 @@
     "Développer": developper,
     "Factoriser": factoriser,
     "Suites": suites,
+    "Équations": equations,
+    "Second degré": secondDegre,
   };
 
   // Défi du jour : 10 questions dans un ordre « échauffement »
   function defiDuJour(avoid) {
-    // Priorités actuelles : fractions, nombres négatifs et suites ;
-    // les identités remarquables (acquises) restent en entretien.
-    const plan = [negatifs, negatifs, fractions, fractions, puissances, pourcentages,
-      suites, suites,
-      Math.random() < 0.5 ? developper : factoriser,
-      Math.random() < 0.5 ? carres : scientifique];
+    // Priorités actuelles (séance du 26/11) : équations du premier degré,
+    // fractions et nombres négatifs. Les suites et le second degré viennent
+    // ensuite ; le reste (identités remarquables, puissances…) reste en entretien.
+    const entretien = [puissances, pourcentages, developper, factoriser, carres, scientifique];
+    const plan = [negatifs, negatifs, fractions, fractions,
+      equations, equations, equations,
+      Math.random() < 0.5 ? secondDegre : suites, suites,
+      pick(entretien)];
     return plan.map((g) => fresh(g, avoid));
   }
 
